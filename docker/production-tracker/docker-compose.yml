@@ -1,0 +1,61 @@
+version: '3'
+
+services:
+  pgadmin:
+    container_name: PGAdminBB
+    image: dpage/pgadmin4:latest
+    environment:
+      PGADMIN_DEFAULT_EMAIL: baris@gmail.com
+      PGADMIN_DEFAULT_PASSWORD: 12345678
+    ports:
+      - 4200:80
+    networks:
+     - ProductionTracker
+
+  postgres:
+    container_name: PostgresBB
+    image: postgres:latest
+    hostname: postgres
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin
+      POSTGRES_DB: productionTrackerDB
+    volumes:
+      - ./volumes/postgres/postgres_data:/var/lib/postgresql/data
+    ports:
+      - 5432:5432
+    networks:
+     - ProductionTracker
+
+  backend:
+    container_name: Spring-BackendBB
+    image: baristann/production-tracker:0.1.0
+    restart: always
+    ports:
+      - 8080:8080
+    hostname: backend
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/productionTrackerDB
+      SPRING_DATASOURCE_USERNAME: admin
+      SPRING_DATASOURCE_PASSWORD: admin
+      JWT_KEY: MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDVCmy0XcG2KAp2sfveIqpjwuXGRsQOVFclqwIMxy9vJmjOmvqxQD+gRuYM6EBZbGRTtlTY4/3fHKI32PflkEDW9SoaLplyMJZvMUJOoMMSuJJFd56mbEK6hVL49YgB5D0Nm8oSPz02r5yrPbVj+uo0R+PT0/gJHi/5kGL8iatqpQIDAQAB
+    networks:
+     - ProductionTracker
+
+  nginx-server:
+    image: nginx:latest
+    container_name: FrontendBB
+    restart: always
+    volumes:
+      - ./volumes/nginx/usr/share/nginx/html:/usr/share/nginx/html
+      - ./volumes/nginx/etc/nginx/conf.d/nginx.conf:/etc/nginx/conf.d/default.conf
+    depends_on:
+      - backend
+    ports:
+      - "443:443"
+      - "80:80"
+    networks:
+      - ProductionTracker
+
+networks:
+  ProductionTracker:
